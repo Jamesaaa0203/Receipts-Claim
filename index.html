@@ -46,7 +46,7 @@
                 <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Log Expense</h2>
             </div>
             
-            <form id="expenseForm" onsubmit="addExpense(event)" class="space-y-4">
+            <form id="expenseForm" onsubmit="addExpense(event)" class="space-y-4" autocomplete="off">
                 
                 <!-- Media Capture Buttons -->
                 <div class="grid grid-cols-2 gap-3">
@@ -82,14 +82,19 @@
                         <input type="date" id="expDate" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all inputField">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Total Amount</label>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Total Amount (RM)</label>
                         <input type="number" step="0.01" id="expAmount" placeholder="0.00" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm font-bold text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all inputField">
                     </div>
                 </div>
 
-                <div>
+                <!-- Shop Name with Saved Datalist Search Integration -->
+                <div class="relative">
                     <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Shop Name</label>
-                    <input type="text" id="expShop" placeholder="Where did you spend this?" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all inputField">
+                    <input type="text" id="expShop" list="savedShopsList" placeholder="Where did you spend this?" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all inputField">
+                    <!-- Dynamic Native Browser Dropdown Container -->
+                    <datalist id="savedShopsList">
+                        <!-- Saved Shops populate automatically via Javascript -->
+                    </datalist>
                 </div>
 
                 <div>
@@ -156,8 +161,9 @@
                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>System Sync Active
                 </p>
             </div>
+            <!-- Updated Currency Value Output directly to RM formatting styling -->
             <div id="grandTotal" class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
-                $0.00
+                RM 0.00
             </div>
         </div>
     </div>
@@ -173,8 +179,9 @@
             "App Subscription", "Office Items", "Fuel (Petrol/Diesel)"
         ];
 
-        let dataset = JSON.parse(localStorage.getItem('claims_dataset_v3')) || { active: [], archived: [] };
-        let storedCategories = JSON.parse(localStorage.getItem('claims_custom_categories_v3')) || defaultCategories;
+        let dataset = JSON.parse(localStorage.getItem('claims_dataset_v4')) || { active: [], archived: [] };
+        let storedCategories = JSON.parse(localStorage.getItem('claims_custom_categories_v4')) || defaultCategories;
+        let savedShops = JSON.parse(localStorage.getItem('claims_saved_shops')) || [];
 
         // Theme Toggle Engine
         function toggleTheme() {
@@ -185,12 +192,9 @@
             const formCard = document.getElementById('formCard');
             const logo = document.getElementById('logoText');
             const btn = document.getElementById('themeBtn');
-            const labels = document.querySelectorAll('.inputLabel');
             const fields = document.querySelectorAll('.inputField');
-            const fontBadges = document.querySelectorAll('.fontBadge');
 
             if (!isDarkMode) {
-                // Light Mode Styling Rules Injection
                 body.className = "bg-slate-50 text-slate-800 min-h-screen pb-36 antialiased";
                 header.className = "border-b border-slate-200 sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-xs";
                 bottomBar.className = "fixed bottom-0 left-0 right-0 bg-slate-900 text-white shadow-2xl z-50 border-t border-slate-800";
@@ -204,7 +208,6 @@
                     f.classList.add('bg-slate-50', 'border-slate-200', 'text-slate-800');
                 });
             } else {
-                // Dark Mode Styling Rules Reset
                 body.className = "bg-slate-950 text-slate-100 min-h-screen pb-36 antialiased dark";
                 header.className = "border-b border-slate-800/80 sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md";
                 bottomBar.className = "fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-lg text-white shadow-2xl z-50 border-t border-slate-800/80";
@@ -221,6 +224,17 @@
             renderList();
         }
 
+        // Populate Saved Shops to the Datalist
+        function renderShopsDatalist() {
+            const dataList = document.getElementById('savedShopsList');
+            dataList.innerHTML = "";
+            savedShops.forEach(shopName => {
+                const option = document.createElement('option');
+                option.value = shopName;
+                dataList.appendChild(option);
+            });
+        }
+
         // Past Record Bulk Import Handler
         function importPastRecords() {
             const rawInput = document.getElementById('bulkJsonInput').value.trim();
@@ -230,18 +244,25 @@
                 const parsed = JSON.parse(rawInput);
                 const recordsArray = Array.isArray(parsed) ? parsed : [parsed];
                 
-                // Clean input mapping to make sure it matches database structures
                 recordsArray.forEach(rec => {
+                    const cleanShop = (rec.shop || "Historical Record").trim();
                     dataset.active.push({
                         id: rec.id || Date.now() + Math.random(),
                         date: rec.date || new Date().toISOString().substring(0, 10),
                         amount: parseFloat(rec.amount) || 0.00,
-                        shop: rec.shop || "Historical Record",
+                        shop: cleanShop,
                         category: rec.category || "Tools",
                         image: rec.image || ""
                     });
+
+                    // Auto-save imported shop names into memory if new
+                    if (cleanShop && !savedShops.includes(cleanShop)) {
+                        savedShops.push(cleanShop);
+                    }
                 });
 
+                localStorage.setItem('claims_saved_shops', JSON.stringify(savedShops));
+                renderShopsDatalist();
                 saveToStorage();
                 document.getElementById('bulkJsonInput').value = "";
                 document.getElementById('importBox').classList.add('hidden');
@@ -280,7 +301,7 @@
             const newCat = input.value.trim();
             if (newCat && !storedCategories.includes(newCat) && newCat !== "CUSTOM_TRIGGER") {
                 storedCategories.push(newCat);
-                localStorage.setItem('claims_custom_categories_v3', JSON.stringify(storedCategories));
+                localStorage.setItem('claims_custom_categories_v4', JSON.stringify(storedCategories));
                 loadCategories(newCat);
                 input.value = "";
                 document.getElementById('customCategoryGroup').classList.add('hidden');
@@ -306,7 +327,7 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('claims_dataset_v3', JSON.stringify(dataset));
+            localStorage.setItem('claims_dataset_v4', JSON.stringify(dataset));
             renderList();
         }
 
@@ -315,14 +336,23 @@
             let categorySelected = document.getElementById('expCategory').value;
             if(categorySelected === "CUSTOM_TRIGGER") return;
             
+            const shopNameInput = document.getElementById('expShop').value.trim();
+
             const item = {
                 id: Date.now(),
                 date: document.getElementById('expDate').value,
                 amount: parseFloat(document.getElementById('expAmount').value),
-                shop: document.getElementById('expShop').value,
+                shop: shopNameInput,
                 category: categorySelected,
                 image: currentImageBase64
             };
+
+            // Smart Shop Memory Logic
+            if (shopNameInput && !savedShops.includes(shopNameInput)) {
+                savedShops.push(shopNameInput);
+                localStorage.setItem('claims_saved_shops', JSON.stringify(savedShops));
+                renderShopsDatalist();
+            }
 
             dataset.active.push(item);
             saveToStorage();
@@ -361,7 +391,7 @@
                 container.appendChild(emptyState);
                 countBadge.className = isDarkMode ? "text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge" : "text-[11px] font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full border border-slate-300 fontBadge";
                 countBadge.textContent = "0 Slips";
-                totalDisplay.textContent = "$0.00";
+                totalDisplay.textContent = "RM 0.00";
                 return;
             }
 
@@ -398,7 +428,7 @@
                         </div>
                     </div>
                     <div class="text-right flex flex-col items-end gap-1 flex-shrink-0">
-                        <span class="text-sm font-extrabold text-emerald-500">$${item.amount.toFixed(2)}</span>
+                        <span class="text-sm font-extrabold text-emerald-500">RM ${item.amount.toFixed(2)}</span>
                         <button onclick="deleteItem(${item.id})" class="text-slate-500 hover:text-rose-500 text-xs p-1 transition-colors cursor-pointer">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
@@ -409,11 +439,12 @@
 
             countBadge.className = isDarkMode ? "text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge" : "text-[11px] font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full border border-slate-300 fontBadge";
             countBadge.textContent = `${dataset.active.length} Slips`;
-            totalDisplay.textContent = `$${accumulatedTotal.toFixed(2)}`;
+            totalDisplay.textContent = `RM ${accumulatedTotal.toFixed(2)}`;
         }
 
         document.getElementById('expDate').value = new Date().toISOString().substring(0, 10);
         loadCategories();
+        renderShopsDatalist();
         renderList();
     </script>
 </body>
