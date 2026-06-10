@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClaimTrack Pro</title>
+    <!-- Tailwind CSS for high-end styling -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- FontAwesome Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+    </style>
+</head>
+<body id="bodyTheme" class="bg-slate-950 text-slate-100 min-h-screen pb-36 antialiased dark">
+
+    <!-- Premium Dashboard Header -->
+    <header id="headerTheme" class="border-b border-slate-800/80 sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-md mx-auto px-5 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div>
+                    <span class="text-[10px] font-bold tracking-widest text-emerald-500 uppercase bg-emerald-500/10 px-2 py-0.5 rounded-full">Operations</span>
+                    <h1 id="logoText" class="text-xl font-extrabold tracking-tight text-white mt-1">Claim<span class="text-emerald-400 font-light">Track</span></h1>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button onclick="toggleTheme()" class="mt-4 p-2 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-amber-400 border border-slate-700/50 cursor-pointer transition-all" id="themeBtn">
+                    <i class="fa-solid fa-moon text-sm"></i>
+                </button>
+            </div>
+            <button onclick="archiveClaims()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-lg flex items-center gap-2 border border-emerald-400/20 cursor-pointer">
+                <i class="fa-solid fa-receipt text-emerald-200"></i> Clear & Process
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto px-4 mt-6 space-y-6">
+
+        <!-- Input Form Card -->
+        <section id="formCard" class="bg-slate-900/60 border border-slate-800 rounded-3xl p-5 shadow-xl backdrop-blur-xs">
+            <div class="flex items-center gap-2 mb-4">
+                <div class="w-2 h-4 bg-emerald-500 rounded-full"></div>
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Log Expense</h2>
+            </div>
+            
+            <form id="expenseForm" onsubmit="addExpense(event)" class="space-y-4">
+                
+                <!-- Media Capture Buttons -->
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex flex-col items-center justify-center border border-slate-800 bg-slate-950/40 rounded-2xl p-4 cursor-pointer hover:bg-slate-800/50 hover:border-emerald-500/50 transition-all text-center group">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-camera text-base"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-300 mt-2 inputLabel">Take Photo</span>
+                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleImage(this)">
+                    </label>
+                    <label class="flex flex-col items-center justify-center border border-slate-800 bg-slate-950/40 rounded-2xl p-4 cursor-pointer hover:bg-slate-800/50 hover:border-emerald-500/50 transition-all text-center group">
+                        <div class="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-image text-base"></i>
+                        </div>
+                        <span class="text-xs font-semibold text-slate-300 mt-2 inputLabel">Upload File</span>
+                        <input type="file" accept="image/*" class="hidden" onchange="handleImage(this)">
+                    </label>
+                </div>
+                
+                <!-- Image Preview Box -->
+                <div id="previewContainer" class="hidden relative rounded-2xl overflow-hidden border border-slate-800 h-36 bg-slate-950">
+                    <img id="receiptPreview" src="" class="w-full h-full object-cover opacity-80">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950/60 to-transparent"></div>
+                    <button type="button" onclick="clearPreview()" class="absolute top-3 right-3 bg-slate-900/80 hover:bg-rose-600 text-white rounded-full p-1 text-xs w-7 h-7 flex items-center justify-center transition-colors border border-slate-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Core Form Fields -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Transaction Date</label>
+                        <input type="date" id="expDate" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all inputField">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Total Amount</label>
+                        <input type="number" step="0.01" id="expAmount" placeholder="0.00" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm font-bold text-emerald-400 placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all inputField">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Shop Name</label>
+                    <input type="text" id="expShop" placeholder="Where did you spend this?" required class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all inputField">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Category Selector</label>
+                    <select id="expCategory" onchange="checkCustomCategory(this)" class="w-full bg-slate-950/60 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500 transition-all inputField">
+                    </select>
+                </div>
+
+                <!-- Smart Custom Category Dynamic Field -->
+                <div id="customCategoryGroup" class="hidden">
+                    <label class="block text-[11px] font-bold text-amber-400 uppercase tracking-wider mb-1.5">Create New Category Name</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="customCategoryInput" placeholder="e.g., Boat Maintenance" class="w-full bg-slate-950/60 border border-amber-500/30 rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-amber-500 transition-all inputField">
+                        <button type="button" onclick="saveCustomCategory()" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-bold text-xs px-4 rounded-xl border border-amber-500/20 transition-all cursor-pointer">
+                            Save
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-slate-800 hover:bg-emerald-600 text-white font-bold text-sm py-3 rounded-xl transition-all shadow-md mt-2 border border-slate-700 hover:border-emerald-500 cursor-pointer">
+                    Add Receipt
+                </button>
+            </form>
+
+            <!-- 📥 PAST RECORD BULK IMPORTER SECTION -->
+            <div class="mt-4 pt-4 border-t border-slate-800/60">
+                <button onclick="document.getElementById('importBox').classList.toggle('hidden')" class="text-[11px] text-slate-500 hover:text-emerald-400 flex items-center gap-1 font-bold tracking-wider uppercase cursor-pointer transition-colors">
+                    <i class="fa-solid fa-code-merge"></i> Paste Old Data / Previous Records
+                </button>
+                <div id="importBox" class="hidden mt-3 space-y-2">
+                    <p class="text-[10px] text-slate-400">Paste your raw array list or spreadsheet JSON formatting structure below:</p>
+                    <textarea id="bulkJsonInput" rows="4" placeholder='[{"date":"2026-06-01","amount":150.50,"shop":"Texaco Fuel","category":"Fuel (Petrol/Diesel)"}]' class="w-full bg-slate-950/80 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-slate-300 focus:outline-none focus:border-emerald-500 inputField"></textarea>
+                    <button onclick="importPastRecords()" class="w-full bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 text-xs font-bold py-2 rounded-xl border border-emerald-500/20 transition-all cursor-pointer">
+                        Inject Records into Active List
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic List Workspace -->
+        <section class="space-y-3">
+            <div class="flex justify-between items-center px-1">
+                <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Statements</h2>
+                <span id="itemCount" class="text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge">0 Slips</span>
+            </div>
+            
+            <div id="claimsList" class="space-y-3">
+                <!-- Empty State -->
+                <div id="emptyState" class="text-center py-12 bg-slate-900/30 border border-dashed border-slate-800 rounded-3xl">
+                    <i class="fa-solid fa-receipt text-slate-700 text-3xl mb-2"></i>
+                    <p class="text-sm text-slate-500">No active receipts logged.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Ultra-Striking Glass Dashboard Bottom Bar -->
+    <div id="bottomBarTheme" class="fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-lg text-white shadow-2xl z-50 border-t border-slate-800/80">
+        <div class="max-w-md mx-auto px-6 py-5 flex justify-between items-center">
+            <div>
+                <p class="text-[10px] uppercase tracking-widest text-slate-400 font-bold">Unclaimed Balance</p>
+                <p class="text-xs text-emerald-400 font-medium mt-0.5 flex items-center gap-1.5" id="archiveStatus">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>System Sync Active
+                </p>
+            </div>
+            <div id="grandTotal" class="text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400">
+                $0.00
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Business Logic Scripts -->
+    <script>
+        let currentImageBase64 = "";
+        let isDarkMode = true;
+        
+        const defaultCategories = [
+            "Tools", "Maintenance Needs", "Sea Cage Nets & Rope", 
+            "Staff Welfare (Drinks/Snacks)", "Seaweed", "Oxygen Tank Related", 
+            "App Subscription", "Office Items", "Fuel (Petrol/Diesel)"
+        ];
+
+        let dataset = JSON.parse(localStorage.getItem('claims_dataset_v3')) || { active: [], archived: [] };
+        let storedCategories = JSON.parse(localStorage.getItem('claims_custom_categories_v3')) || defaultCategories;
+
+        // Theme Toggle Engine
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const body = document.getElementById('bodyTheme');
+            const header = document.getElementById('headerTheme');
+            const bottomBar = document.getElementById('bottomBarTheme');
+            const formCard = document.getElementById('formCard');
+            const logo = document.getElementById('logoText');
+            const btn = document.getElementById('themeBtn');
+            const labels = document.querySelectorAll('.inputLabel');
+            const fields = document.querySelectorAll('.inputField');
+            const fontBadges = document.querySelectorAll('.fontBadge');
+
+            if (!isDarkMode) {
+                // Light Mode Styling Rules Injection
+                body.className = "bg-slate-50 text-slate-800 min-h-screen pb-36 antialiased";
+                header.className = "border-b border-slate-200 sticky top-0 z-50 bg-white/95 backdrop-blur-md shadow-xs";
+                bottomBar.className = "fixed bottom-0 left-0 right-0 bg-slate-900 text-white shadow-2xl z-50 border-t border-slate-800";
+                formCard.className = "bg-white border border-slate-200 rounded-3xl p-5 shadow-sm";
+                logo.className = "text-xl font-extrabold tracking-tight text-slate-900 mt-1";
+                btn.innerHTML = `<i class="fa-solid fa-sun text-sm"></i>`;
+                btn.className = "mt-4 p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-amber-600 border border-slate-200 cursor-pointer transition-all";
+                
+                fields.forEach(f => {
+                    f.classList.remove('bg-slate-950/60', 'border-slate-800', 'text-white');
+                    f.classList.add('bg-slate-50', 'border-slate-200', 'text-slate-800');
+                });
+            } else {
+                // Dark Mode Styling Rules Reset
+                body.className = "bg-slate-950 text-slate-100 min-h-screen pb-36 antialiased dark";
+                header.className = "border-b border-slate-800/80 sticky top-0 z-50 bg-slate-900/80 backdrop-blur-md";
+                bottomBar.className = "fixed bottom-0 left-0 right-0 bg-slate-950/90 backdrop-blur-lg text-white shadow-2xl z-50 border-t border-slate-800/80";
+                formCard.className = "bg-slate-900/60 border border-slate-800 rounded-3xl p-5 shadow-xl backdrop-blur-xs";
+                logo.className = "text-xl font-extrabold tracking-tight text-white mt-1";
+                btn.innerHTML = `<i class="fa-solid fa-moon text-sm"></i>`;
+                btn.className = "mt-4 p-2 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-amber-400 border border-slate-700/50 cursor-pointer transition-all";
+                
+                fields.forEach(f => {
+                    f.classList.remove('bg-slate-50', 'border-slate-200', 'text-slate-800');
+                    f.classList.add('bg-slate-950/60', 'border-slate-800', 'text-white');
+                });
+            }
+            renderList();
+        }
+
+        // Past Record Bulk Import Handler
+        function importPastRecords() {
+            const rawInput = document.getElementById('bulkJsonInput').value.trim();
+            if(!rawInput) return;
+
+            try {
+                const parsed = JSON.parse(rawInput);
+                const recordsArray = Array.isArray(parsed) ? parsed : [parsed];
+                
+                // Clean input mapping to make sure it matches database structures
+                recordsArray.forEach(rec => {
+                    dataset.active.push({
+                        id: rec.id || Date.now() + Math.random(),
+                        date: rec.date || new Date().toISOString().substring(0, 10),
+                        amount: parseFloat(rec.amount) || 0.00,
+                        shop: rec.shop || "Historical Record",
+                        category: rec.category || "Tools",
+                        image: rec.image || ""
+                    });
+                });
+
+                saveToStorage();
+                document.getElementById('bulkJsonInput').value = "";
+                document.getElementById('importBox').classList.add('hidden');
+                alert(`Successfully injected ${recordsArray.length} historical records!`);
+            } catch(err) {
+                alert("Error reading format. Make sure it's valid JSON text layout!");
+            }
+        }
+
+        function loadCategories(selectedVal = "") {
+            const select = document.getElementById('expCategory');
+            select.innerHTML = "";
+            storedCategories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat; opt.textContent = cat;
+                select.appendChild(opt);
+            });
+            const specialOpt = document.createElement('option');
+            specialOpt.value = "CUSTOM_TRIGGER"; specialOpt.textContent = "➕ Add Custom Category...";
+            select.appendChild(specialOpt);
+            if(selectedVal) select.value = selectedVal;
+        }
+
+        function checkCustomCategory(select) {
+            const customGroup = document.getElementById('customCategoryGroup');
+            if (select.value === "CUSTOM_TRIGGER") {
+                customGroup.classList.remove('hidden');
+                document.getElementById('customCategoryInput').focus();
+            } else {
+                customGroup.classList.add('hidden');
+            }
+        }
+
+        function saveCustomCategory() {
+            const input = document.getElementById('customCategoryInput');
+            const newCat = input.value.trim();
+            if (newCat && !storedCategories.includes(newCat) && newCat !== "CUSTOM_TRIGGER") {
+                storedCategories.push(newCat);
+                localStorage.setItem('claims_custom_categories_v3', JSON.stringify(storedCategories));
+                loadCategories(newCat);
+                input.value = "";
+                document.getElementById('customCategoryGroup').classList.add('hidden');
+            }
+        }
+
+        function handleImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    currentImageBase64 = e.target.result;
+                    document.getElementById('receiptPreview').src = currentImageBase64;
+                    document.getElementById('previewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function clearPreview() {
+            currentImageBase64 = "";
+            document.getElementById('receiptPreview').src = "";
+            document.getElementById('previewContainer').classList.add('hidden');
+        }
+
+        function saveToStorage() {
+            localStorage.setItem('claims_dataset_v3', JSON.stringify(dataset));
+            renderList();
+        }
+
+        function addExpense(e) {
+            e.preventDefault();
+            let categorySelected = document.getElementById('expCategory').value;
+            if(categorySelected === "CUSTOM_TRIGGER") return;
+            
+            const item = {
+                id: Date.now(),
+                date: document.getElementById('expDate').value,
+                amount: parseFloat(document.getElementById('expAmount').value),
+                shop: document.getElementById('expShop').value,
+                category: categorySelected,
+                image: currentImageBase64
+            };
+
+            dataset.active.push(item);
+            saveToStorage();
+            document.getElementById('expAmount').value = '';
+            document.getElementById('expShop').value = '';
+            clearPreview();
+        }
+
+        function deleteItem(id) {
+            dataset.active = dataset.active.filter(item => item.id !== id);
+            saveToStorage();
+        }
+
+        function archiveClaims() {
+            if (dataset.active.length === 0) return;
+            if(confirm("Process and wipe current cycle? Data will be securely saved into historical backup logs.")) {
+                const archiveBatch = {
+                    claimDate: new Date().toISOString().substring(0, 10),
+                    items: [...dataset.active]
+                };
+                dataset.archived.push(archiveBatch);
+                dataset.active = [];
+                saveToStorage();
+            }
+        }
+
+        function renderList() {
+            const container = document.getElementById('claimsList');
+            const emptyState = document.getElementById('emptyState');
+            const countBadge = document.getElementById('itemCount');
+            const totalDisplay = document.getElementById('grandTotal');
+            
+            container.innerHTML = "";
+            
+            if (dataset.active.length === 0) {
+                container.appendChild(emptyState);
+                countBadge.className = isDarkMode ? "text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge" : "text-[11px] font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full border border-slate-300 fontBadge";
+                countBadge.textContent = "0 Slips";
+                totalDisplay.textContent = "$0.00";
+                return;
+            }
+
+            const sortedItems = [...dataset.active].sort((a,b) => new Date(b.date) - new Date(a.date));
+            let accumulatedTotal = 0;
+
+            sortedItems.forEach(item => {
+                accumulatedTotal += item.amount;
+                const card = document.createElement('div');
+                
+                card.className = isDarkMode 
+                    ? "bg-slate-900/40 border border-slate-800 rounded-2xl p-4 flex gap-4 items-center justify-between shadow-xs transition-all hover:border-slate-700/60"
+                    : "bg-white border border-slate-200 rounded-2xl p-4 flex gap-4 items-center justify-between shadow-xs transition-all hover:border-slate-300";
+                
+                let imgMarkup = item.image 
+                    ? `<div class="w-11 h-11 rounded-xl overflow-hidden border border-slate-800/80 flex-shrink-0 bg-slate-950 shadow-inner"><img src="${item.image}" class="w-full h-full object-cover"></div>`
+                    : `<div class="w-11 h-11 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-slate-600 flex-shrink-0 text-sm shadow-inner"><i class="fa-solid fa-receipt"></i></div>`;
+
+                if(!isDarkMode) {
+                    imgMarkup = item.image 
+                    ? `<div class="w-11 h-11 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 bg-slate-100"><img src="${item.image}" class="w-full h-full object-cover"></div>`
+                    : `<div class="w-11 h-11 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400 flex-shrink-0 text-sm"><i class="fa-solid fa-receipt"></i></div>`;
+                }
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        ${imgMarkup}
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2">
+                                <span class="${isDarkMode ? 'bg-slate-800 text-slate-300 border-slate-700/50' : 'bg-slate-100 text-slate-600 border-slate-200'} text-[10px] font-bold px-2 py-0.5 rounded-md border truncate max-w-[130px]">${item.category}</span>
+                                <span class="text-[10px] text-slate-500 font-semibold">${item.date}</span>
+                            </div>
+                            <h3 class="${isDarkMode ? 'text-white' : 'text-slate-900'} text-sm font-bold mt-1 truncate">${item.shop}</h3>
+                        </div>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1 flex-shrink-0">
+                        <span class="text-sm font-extrabold text-emerald-500">$${item.amount.toFixed(2)}</span>
+                        <button onclick="deleteItem(${item.id})" class="text-slate-500 hover:text-rose-500 text-xs p-1 transition-colors cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+
+            countBadge.className = isDarkMode ? "text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge" : "text-[11px] font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full border border-slate-300 fontBadge";
+            countBadge.textContent = `${dataset.active.length} Slips`;
+            totalDisplay.textContent = `$${accumulatedTotal.toFixed(2)}`;
+        }
+
+        document.getElementById('expDate').value = new Date().toISOString().substring(0, 10);
+        loadCategories();
+        renderList();
+    </script>
+</body>
+</html>
