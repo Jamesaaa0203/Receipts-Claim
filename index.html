@@ -190,9 +190,10 @@
             "App Subscription", "Office Items", "Fuel (Petrol/Diesel)"
         ];
 
-        let dataset = JSON.parse(localStorage.getItem('claims_master_dataset_v2')) || { active: [], archived: [] };
-        let storedCategories = JSON.parse(localStorage.getItem('claims_master_categories_v2')) || defaultCategories;
-        let savedShops = JSON.parse(localStorage.getItem('claims_master_shops_v2')) || [];
+        // Storage Keys Locked In
+        let dataset = JSON.parse(localStorage.getItem('claims_master_dataset_v3')) || { active: [], archived: [] };
+        let storedCategories = JSON.parse(localStorage.getItem('claims_master_categories_v3')) || defaultCategories;
+        let savedShops = JSON.parse(localStorage.getItem('claims_master_shops_v3')) || [];
 
         function formatLongDate(dateStr) {
             const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
@@ -210,7 +211,6 @@
             return `${day}${suffix} ${months[monthIdx]}`;
         }
 
-        // 🟢 SMART OUTPUT: Formats message gracefully based on description availability
         function sendWhatsAppToRobbie() {
             if (dataset.active.length === 0) {
                 alert("You have no active receipts to send!");
@@ -240,9 +240,7 @@
                     elementCounter = 1; 
                 }
 
-                // If description is filled out, format it as "Description (Shop Name)". Otherwise just use the Shop Name.
                 let lineText = item.desc ? `${item.desc} (${item.shop})` : `${item.shop}`;
-                
                 message += `${elementCounter}. ${lineText} - RM ${item.amount.toFixed(2)}\n`;
                 elementCounter++;
             });
@@ -253,7 +251,6 @@
             window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         }
 
-        // Theme Toggle Engine
         function toggleTheme() {
             isDarkMode = !isDarkMode;
             const body = document.getElementById('bodyTheme');
@@ -329,7 +326,7 @@
                     }
                 });
 
-                localStorage.setItem('claims_master_shops_v2', JSON.stringify(savedShops));
+                localStorage.setItem('claims_master_shops_v3', JSON.stringify(savedShops));
                 renderShopsDatalist();
                 saveToStorage();
                 document.getElementById('bulkJsonInput').value = "";
@@ -369,7 +366,7 @@
             const newCat = input.value.trim();
             if (newCat && !storedCategories.includes(newCat) && newCat !== "CUSTOM_TRIGGER") {
                 storedCategories.push(newCat);
-                localStorage.setItem('claims_master_categories_v2', JSON.stringify(storedCategories));
+                localStorage.setItem('claims_master_categories_v3', JSON.stringify(storedCategories));
                 loadCategories(newCat);
                 input.value = "";
                 document.getElementById('customCategoryGroup').classList.add('hidden');
@@ -395,7 +392,7 @@
         }
 
         function saveToStorage() {
-            localStorage.setItem('claims_master_dataset_v2', JSON.stringify(dataset));
+            localStorage.setItem('claims_master_dataset_v3', JSON.stringify(dataset));
             renderList();
         }
 
@@ -419,12 +416,14 @@
 
             if (shopNameInput && !savedShops.includes(shopNameInput)) {
                 savedShops.push(shopNameInput);
-                localStorage.setItem('claims_master_shops_v2', JSON.stringify(savedShops));
+                localStorage.setItem('claims_master_shops_v3', JSON.stringify(savedShops));
                 renderShopsDatalist();
             }
 
             dataset.active.push(item);
             saveToStorage();
+            
+            // Clean up forms smoothly
             document.getElementById('expAmount').value = '';
             document.getElementById('expShop').value = '';
             document.getElementById('expDesc').value = '';
@@ -461,7 +460,7 @@
             
             container.innerHTML = "";
             
-            if (dataset.active.length === 0) {
+            if (!dataset.active || dataset.active.length === 0) {
                 container.appendChild(emptyState);
                 countBadge.className = isDarkMode ? "text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge" : "text-[11px] font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full border border-slate-300 fontBadge";
                 countBadge.textContent = "0 Slips";
@@ -518,6 +517,7 @@
             totalDisplay.textContent = `RM ${accumulatedTotal.toFixed(2)}`;
         }
 
+        // Initialize App Operations
         document.getElementById('expDate').value = new Date().toISOString().substring(0, 10);
         loadCategories();
         renderShopsDatalist();
