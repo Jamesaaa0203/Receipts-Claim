@@ -193,6 +193,9 @@
         ];
 
         // Storage Keys Locked In
+        // Google Sheets + Drive sync endpoint (Apps Script Web App)
+        const SHEET_SYNC_URL = "https://script.google.com/macros/s/AKfycbxW-0xfGHcKi3i-g2GShbhW6Wo6ysWfkbA9FE-aVtlCBaxMeFD_gIiFdCPcukZP8OVd/exec";
+
         let dataset = JSON.parse(localStorage.getItem('claims_master_dataset_v3')) || { active: [], archived: [] };
         let storedCategories = JSON.parse(localStorage.getItem('claims_master_categories_v3')) || defaultCategories;
         let savedShops = JSON.parse(localStorage.getItem('claims_master_shops_v3')) || [];
@@ -450,8 +453,33 @@
                 
                 const element = document.getElementById('archiveStatus');
                 element.innerHTML = "Batch Cleared! ✨";
-                setTimeout(() => { element.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>System Sync Active`; }, 4000);
+
+                syncBatchToGoogle(archiveBatch, element);
             }
+        }
+
+        function syncBatchToGoogle(archiveBatch, statusEl) {
+            statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>Syncing to Sheet...`;
+
+            fetch(SHEET_SYNC_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight on Apps Script
+                body: JSON.stringify(archiveBatch)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== 'ok') throw new Error(data.message || 'Sync failed');
+                statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Synced ${data.count} to Sheet ✓`;
+            })
+            .catch(err => {
+                statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Sync failed (saved locally)`;
+                console.error('ClaimTrack sync error:', err);
+            })
+            .finally(() => {
+                setTimeout(() => {
+                    statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>System Sync Active`;
+                }, 5000);
+            });
         }
 
         function renderList() {
