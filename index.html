@@ -484,14 +484,17 @@
 
         function renderList() {
             const container = document.getElementById('claimsList');
-            const emptyState = document.getElementById('emptyState');
             const countBadge = document.getElementById('itemCount');
             const totalDisplay = document.getElementById('grandTotal');
             
             container.innerHTML = "";
             
             if (!dataset.active || dataset.active.length === 0) {
-                container.appendChild(emptyState);
+                container.innerHTML = `
+                    <div id="emptyState" class="text-center py-12 bg-slate-900/30 border border-dashed border-slate-800 rounded-3xl">
+                        <i class="fa-solid fa-receipt text-slate-700 text-3xl mb-2"></i>
+                        <p class="text-sm text-slate-500">No active receipts logged.</p>
+                    </div>`;
                 countBadge.className = isDarkMode ? "text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge" : "text-[11px] font-bold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full border border-slate-300 fontBadge";
                 countBadge.textContent = "0 Slips";
                 totalDisplay.textContent = "RM 0.00";
