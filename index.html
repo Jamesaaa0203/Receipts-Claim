@@ -154,6 +154,16 @@
                 <h2 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Active Statements</h2>
                 <span id="itemCount" class="text-[11px] font-bold text-slate-300 bg-slate-800 px-2.5 py-0.5 rounded-full border border-slate-700 fontBadge">0 Slips</span>
             </div>
+
+            <div id="storageIndicator" class="hidden px-1">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Local Storage</span>
+                    <span id="storageText" class="text-[10px] font-bold text-slate-400">0%</span>
+                </div>
+                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="storageBar" class="h-full rounded-full transition-all duration-500 bg-emerald-400" style="width: 0%"></div>
+                </div>
+            </div>
             
             <div id="claimsList" class="space-y-3">
                 <!-- Empty State -->
@@ -429,12 +439,41 @@
             try {
                 localStorage.setItem('claims_master_dataset_v3', JSON.stringify(dataset));
                 renderList();
+                updateStorageIndicator();
                 return true;
             } catch (err) {
                 console.error('Storage error:', err);
                 alert("⚠️ Couldn't save — your device's local storage is full. Try archiving old batches first, or retake the photo at a lower resolution.");
                 renderList();
+                updateStorageIndicator();
                 return false;
+            }
+        }
+
+        // Browsers typically cap web app local storage around 5-10MB — 5MB is the
+        // safe conservative floor (iOS Safari). Warn the user before they hit it.
+        function updateStorageIndicator() {
+            try {
+                const raw = localStorage.getItem('claims_master_dataset_v3') || '';
+                const bytes = new Blob([raw]).size;
+                const quota = 5 * 1024 * 1024;
+                const percent = Math.min(100, Math.round((bytes / quota) * 100));
+
+                const indicator = document.getElementById('storageIndicator');
+                const bar = document.getElementById('storageBar');
+                const text = document.getElementById('storageText');
+
+                if (percent < 40) {
+                    indicator.classList.add('hidden');
+                    return;
+                }
+                indicator.classList.remove('hidden');
+                text.textContent = percent + '% used';
+                bar.style.width = percent + '%';
+                bar.className = 'h-full rounded-full transition-all duration-500 ' +
+                    (percent >= 80 ? 'bg-rose-500' : percent >= 60 ? 'bg-amber-400' : 'bg-emerald-400');
+            } catch (err) {
+                console.error('Storage check failed:', err);
             }
         }
 
@@ -510,6 +549,9 @@
             .then(res => res.json())
             .then(data => {
                 if (data.status !== 'ok') throw new Error(data.message || 'Sync failed');
+                // Photos are now safely in Drive — drop the local copies to save space.
+                archiveBatch.items.forEach(item => { item.image = ""; });
+                saveToStorage();
                 statusEl.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>Synced ${data.count} to Sheet ✓`;
             })
             .catch(err => {
@@ -591,11 +633,34 @@
             totalDisplay.textContent = `RM ${accumulatedTotal.toFixed(2)}`;
         }
 
+        // Archived receipts are already backed up in Drive once synced — no need
+        // to also keep a full-size photo copy sitting in local storage forever.
+        // This runs once to reclaim space from batches archived before this fix.
+        function pruneArchivedImages() {
+            if (localStorage.getItem('claims_master_pruned_v1')) return;
+            let changed = false;
+            (dataset.archived || []).forEach(function (batch) {
+                (batch.items || []).forEach(function (item) {
+                    if (item.image) { item.image = ""; changed = true; }
+                });
+            });
+            if (changed) {
+                try {
+                    localStorage.setItem('claims_master_dataset_v3', JSON.stringify(dataset));
+                } catch (err) {
+                    console.error('Prune save failed:', err);
+                }
+            }
+            localStorage.setItem('claims_master_pruned_v1', '1');
+        }
+
         // Initialize App Operations
         document.getElementById('expDate').value = new Date().toISOString().substring(0, 10);
+        pruneArchivedImages();
         loadCategories();
         renderShopsDatalist();
         renderList();
+        updateStorageIndicator();
     </script>
 </body>
 </html>
